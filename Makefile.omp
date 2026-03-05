@@ -1,0 +1,35 @@
+include common.mk
+
+# ---------- Precision Switch ----------
+ifeq ($(PRECISION), FLOAT)
+    PRECISION_FLAG = -DUSE_FLOAT
+else
+    PRECISION_FLAG =
+endif
+
+# ---------- OpenMP Flags ----------
+CFLAGS = $(CFLAGS_COMMON) -march=native -fopenmp $(PRECISION_FLAG)
+LDFLAGS = -lm -fopenmp
+
+# ---------- Objects ----------
+OMP_OBJ = $(ODIR)/ray_tracing_omp.o $(TIMER_OBJ)
+
+# ---------- Default ----------
+all: ray_tracing_omp
+
+# ---------- Compile ----------
+$(ODIR)/ray_tracing_omp.o: $(SDIR)/ray_tracing.c $(DEPS) | $(ODIR)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+# ---------- Link ----------
+ray_tracing_omp: $(OMP_OBJ)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+# ---------- Utilities ----------
+.PHONY: clean run
+
+clean:
+	rm -rf $(ODIR) ray_tracing_omp
+
+run: ray_tracing_omp
+	./ray_tracing_omp 1000000000 1000 12

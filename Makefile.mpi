@@ -1,0 +1,59 @@
+include common.mk
+
+# ---------- Compilers ----------
+NVCC = nvcc
+MPICC = mpicc
+
+# ---------- Architecture Mapping ----------
+GPU_TYPE ?= v100
+
+ifeq ($(GPU_TYPE), a100)
+    ARCH_FLAG = -arch=sm_80
+else ifeq ($(GPU_TYPE), v100)
+    ARCH_FLAG = -arch=sm_70
+else ifeq ($(GPU_TYPE), rtx6000)
+    ARCH_FLAG = -arch=sm_75
+else
+    ARCH_FLAG = -arch=sm_50
+endif
+
+# ---------- Precision Switch ----------
+ifeq ($(PRECISION), FLOAT)
+    PRECISION_FLAG = -DUSE_FLOAT
+else
+    PRECISION_FLAG =
+endif
+
+# ---------- Compiler Flags ----------
+# Extract MPI include/lib paths from the wrapper compiler
+MPI_INC = $(shell mpicc --showme:incdirs | xargs -n1 echo -I)
+MPI_LIB = $(shell mpicc --showme:libdirs | xargs -n1 echo -L)
+
+NVCCFLAGS = -O3 $(ARCH_FLAG) $(PRECISION_FLAG) -I$(IDIR) $(MPI_INC) \
+            -Xcompiler "-O3,-fopenmp,-Wall,-Wextra"
+
+# ---------- Linker Flags ----------
+LDFLAGS = -lm -fopenmp $(MPI_LIB) -lmpi -lcudart
+
+# ---------- Objects ----------
+MPI_OBJ = $(ODIR)/ray_tracing_mpi.o $(TIMER_OBJ)
+
+# ---------- Default ----------
+all: ray_tracing_mpi
+
+# ---------- Compile (Use NVCC for the .cu file) ----------
+$(ODIR)/ray_tracing_mpi.o: $(SDIR)/ray_tracing_mpi.cu $(DEPS) | $(ODIR)
+	$(NVCC) $(NVCCFLAGS) -c -o $@ $<
+
+# ---------- Link (Use MPICC to finalize) ----------
+ray_tracing_mpi: $(MPI_OBJ)
+	$(MPICC) -o $@ $^ $(LDFLAGS)
+
+# ---------- Utilities ----------
+.PHONY: clean run
+
+clean:
+	rm -rf $(ODIR) ray_tracing_mpi
+
+run: ray_tracing_mpi
+	mpirun -np 2 ./ray_tracing_mpi 1000000000 1000 640 640

@@ -1,0 +1,51 @@
+include common.mk
+
+# ---------- Architecture Mapping ----------
+GPU_TYPE ?= v100
+
+ifeq ($(GPU_TYPE), a100)
+    ARCH_FLAG = -arch=sm_80
+else ifeq ($(GPU_TYPE), v100)
+    ARCH_FLAG = -arch=sm_70
+else ifeq ($(GPU_TYPE), rtx6000)
+    ARCH_FLAG = -arch=sm_75
+else
+    # Fallback for generic Maxwell or newer
+    ARCH_FLAG = -arch=sm_50
+endif
+
+# ---------- Precision Switch ----------
+ifeq ($(PRECISION), FLOAT)
+    PRECISION_FLAG = -DUSE_FLOAT
+else
+    PRECISION_FLAG =
+endif
+
+# ---------- CUDA Flags ----------
+NVCCFLAGS = -O3 $(ARCH_FLAG) -I$(IDIR) $(PRECISION_FLAG) \
+    -Xcompiler "-O3 -fopenmp -Wall -Wextra"
+
+LDFLAGS = -lm -lgomp -lcudart
+
+# ---------- Objects ----------
+CUDA_OBJ = $(ODIR)/ray_tracing_cuda.o $(TIMER_OBJ)
+
+# ---------- Default ----------
+all: ray_tracing_cuda
+
+# ---------- Compile ----------
+$(ODIR)/ray_tracing_cuda.o: $(SDIR)/ray_tracing.cu $(DEPS) | $(ODIR)
+	$(NVCC) $(NVCCFLAGS) -c -o $@ $<
+
+# ---------- Link ----------
+ray_tracing_cuda: $(CUDA_OBJ)
+	$(NVCC) $(ARCH_FLAG) -o $@ $^ $(LDFLAGS) -Xcompiler "-fopenmp"
+
+# ---------- Utilities ----------
+.PHONY: clean
+
+clean:
+	rm -rf $(ODIR) ray_tracing_cuda
+
+run: ray_tracing_cuda
+	./ray_tracing_cuda 1000000000 1000 640 640

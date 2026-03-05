@@ -1,0 +1,20 @@
+# Build artifacts
+obj/
+*.o
+
+# Binaries
+ray_tracing_omp
+ray_tracing_cuda
+ray_tracing_mpi
+
+# Binary output data
+static/data/*.dat
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+
+# Reports (PDF)
+*.pdf
