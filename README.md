@@ -1,12 +1,12 @@
 # Monte Carlo Ray Tracer
 
-A high-performance Monte Carlo ray tracer that renders a sphere via backward ray tracing. The project progresses from a **serial C** baseline through **OpenMP** shared-memory parallelism to **CUDA** GPU acceleration and finally a **distributed multi-GPU** implementation using **MPI + CUDA** — achieving up to a **1200× speedup** over the serial version on four NVIDIA V100 GPUs.
+A high-performance Monte Carlo ray tracer that renders a sphere via backward ray tracing. The project progresses from a **serial C** baseline through **OpenMP** shared-memory parallelism to **CUDA** GPU acceleration and finally a **distributed multi-GPU** implementation using **MPI + CUDA** — achieving up to a **1200× speedup** over the serial version on four NVIDIA A100 GPUs.
 
 <p align="center">
-  <img src="static/images/v100_1000_dp_image.png" width="360" alt="Rendered sphere (V100, 1B rays, 1000×1000 grid, FP64)"/>
+  <img src="static/images/a100_1000_dp_image.png" width="360" alt="Rendered sphere (A100, 1B rays, 1000×1000 grid, FP64)"/>
 </p>
 
-<p align="center"><em>1 billion rays, 1000 × 1000 grid, double precision — rendered on an NVIDIA V100</em></p>
+<p align="center"><em>1 billion rays, 1000 × 1000 grid, double precision — rendered on an NVIDIA A100</em></p>
 
 ---
 
